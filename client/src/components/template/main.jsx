@@ -1,7 +1,6 @@
 import React from 'react';
 import clsx from 'clsx';
 import { makeStyles } from '@material-ui/core/styles';
-import { Typography, Button } from '@material-ui/core';
 
 const useStyles = makeStyles(theme => ({
   content: {
@@ -9,6 +8,7 @@ const useStyles = makeStyles(theme => ({
     width: '100%',
     [theme.breakpoints.up('md')]: {
       width: 'calc(100% - 240px)',
+      float: 'right'
     },
     transition: theme.transitions.create('margin', {
       easing: theme.transitions.easing.sharp,
@@ -18,8 +18,8 @@ const useStyles = makeStyles(theme => ({
       marginTop: theme.spacing(8)
     },
   },
-  padding: {
-    padding: theme.spacing(3)
+  contentWithoutSidebar: {
+    width: '100%',
   },
   warning: {
     background: theme.palette.secondary.main,
@@ -27,7 +27,6 @@ const useStyles = makeStyles(theme => ({
     display: 'flex',
     alignItems: "center",
     justifyContent: "space-between",
-    padding: theme.spacing(1.5),
     marginBottom: theme.spacing(2)
   }
 }));
@@ -37,8 +36,9 @@ export default function Main(props) {
 
   return (
     <main
-      className={clsx(classes.content, {
-        [classes.padding]: !props.noPadding
+      className={clsx({
+        [classes.content]: props.open,
+        [classes.contentWithoutSidebar]: !props.open,
       })}>
 
       {props.children}

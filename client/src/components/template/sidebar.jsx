@@ -1,174 +1,115 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
-  Drawer,
   Box,
   Typography,
-  Hidden,
-  AppBar,
-  Toolbar,
-  IconButton,
 } from '@material-ui/core';
-import { Menu as MenuIcon } from '@material-ui/icons';
-import { makeStyles, useTheme } from '@material-ui/core/styles';
-import clsx from 'clsx';
-import Menu from './menu';
-import SearchBox from '../search/searchBox';
-import UserMenu from '../auth/userMenu';
+import { makeStyles } from '@material-ui/core/styles'
+import { Link } from 'react-router-dom';
+import deafaultCover from '../../assets/images/default-thumbnail.jpg'
+import LoadingItems from '../../components/loaders/loadingItems'
+import { bindActionCreators } from 'redux';
+import { connect } from 'react-redux';
+import { fetchAllItems } from '../../actions/itemActions';
 
-const drawerWidth = 240;
 const useStyles = makeStyles(theme => ({
-  title: {
-    color: theme.palette.primary.contrastText,
-    fontWeight: 'bold'
+  lastItems: {
+    padding:0,
+    margin:0,
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'column'
   },
-  menuButton: {
-    marginRight: 10
-  },
-  drawer: {
-    width: drawerWidth,
-    flexShrink: 0,
-    whiteSpace: 'nowrap'
-  },
-  drawerOpen: {
-    width: drawerWidth,
-    transition: theme.transitions.create('width', {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.enteringScreen
-    })
-  },
-  drawerClose: {
-    transition: theme.transitions.create('width', {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.leavingScreen
-    }),
-    overflowX: 'hidden',
-    width: theme.spacing(7) + 1,
-    [theme.breakpoints.up('sm')]: {
-      width: theme.spacing(9) + 1
+  item: {
+    listStyle: 'none',
+    marginTop: 10,
+    display: 'flex',
+    borderRadius: 4,
+    background: theme.palette.background.paper,
+    overflow: 'hidden',
+    cursor: 'pointer',
+    textDecoration: 'none',
+    height: 75,
+    "&:hover": {
+      backgroundColor: "rgba(0,0,0,0.03)",
     }
   },
-  toolbar: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    padding: '0 8px',
-    ...theme.mixins.toolbar
+  itemCover: {
+    width: 75,
+    height: 75,
+    overflow: 'hidden',
+    backgroundSize: 'cover'
   },
-  paper: {
-    background: theme.palette.primary.main,
-    border: 'none'
+  title: {
+    fontWeight: 'bold',
+    fontSize: 17,
+    color: theme.palette.text.primary,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    display: '-webkit-box',
+    BoxOrient: 'vertical',
+    LineClamp: 2
+  },
+  author: {
+    fontWeight: 'light',
+    fontSize: 14,
+    color: theme.palette.text.secondary
+  },
+  itemContent: { 
+    display: 'flex', 
+    flexDirection: 'column',
+    alignItems: 'flex-start', 
+    justifyContent: 'center', 
+    padding: 10,
+    flex: 1,
   }
-}));
+}))
 
-export default function Sidebar(props) {
-  const classes = useStyles();
-  const theme = useTheme();
-  const [mobileOpen, setMobileOpen] = React.useState(false);
-
-  function handleDrawerToggle() {
-    setMobileOpen(!mobileOpen);
-  }
+const Sidebar = ({items, fetchAllItems}) => {
+  const classes = useStyles()
+  useEffect(() => {
+    fetchAllItems({ pageSize: 5, order: 'desc'});
+  }, [fetchAllItems])
 
   return (
     <>
-      <Hidden mdUp implementation="css">
-        <AppBar position="fixed" >
-
-          <Toolbar>
-            <IconButton
-              color="inherit"
-              aria-label="open drawer"
-              edge="start"
-              onClick={handleDrawerToggle}
-              className={classes.menuButton}
-            >
-              <MenuIcon />
-            </IconButton>
-            <Typography variant="h6" className={classes.title} variant="h6" noWrap>
-              ancaphub
-            </Typography>
-
-            <div
-              style={{
-                flexGrow: '1',
-                display: 'flex',
-                justifyContent: 'flex-end'
-              }}
-            >
-              <UserMenu />
-            </div>
-          </Toolbar>
-        </AppBar>
-      </Hidden>
-
-      <Hidden mdUp implementation="css">
-        <Drawer
-          variant="temporary"
-          anchor={theme.direction === 'rtl' ? 'right' : 'left'}
-          open={mobileOpen}
-          onClose={handleDrawerToggle}
-          className={clsx(classes.drawer, {
-            [classes.drawerOpen]: true,
-            [classes.drawerClose]: !true
-          })}
-          classes={{
-            paper: clsx(classes.paper, {
-              [classes.drawerOpen]: true,
-              [classes.drawerClose]: !true
-            })
-          }}
-          ModalProps={{
-            keepMounted: true, // Better open performance on mobile.
-          }}
-        >
-          <Box display="flex" alignItems="center" width="100%" height="100%">
-            <div style={{ flexGrow: 1 }}>
-              <Box id="search" px={2} my={1}>
-                <SearchBox />
-              </Box>
-              <Menu />
-            </div>
-          </Box>
-        </Drawer>
-      </Hidden>
-
-      <Hidden smDown implementation="css">
-        <Drawer
-          variant="permanent"
-          className={clsx(classes.drawer, {
-            [classes.drawerOpen]: true,
-            [classes.drawerClose]: !true
-          })}
-          classes={{
-            paper: clsx(classes.paper, {
-              [classes.drawerOpen]: true,
-              [classes.drawerClose]: !true
-            })
-          }}
-          open={true}>
-          <Box id="header" px={2} mt={1} display="flex" alignItems="center">
-            <Typography className={classes.title} variant="h6" noWrap>
-              ancaphub
-            </Typography>
-
-            <div
-              style={{
-                flexGrow: '1',
-                display: 'flex',
-                justifyContent: 'flex-end'
-              }}
-            >
-              <UserMenu />
-            </div>
-          </Box>
-          <Box id="search" px={2} my={1}>
-            <SearchBox />
-          </Box>
-          <Menu />
-        </Drawer>
-      </Hidden>
+      <Box mb={0.5}>
+        <Typography variant="h6" component="h2">
+          Itens Recentes
+        </Typography>
+      </Box>
+      {items.loading ? (
+        <Box pt={2}>
+          <LoadingItems />
+        </Box>
+      ) : (
+          <div className={classes.lastItems}>
+            {items.allItems.items &&
+              items.allItems.items.map(item => (
+                <Link className={classes.item} to={`/${item.type}s/${item._id}`} key={item._id}>
+                    <div 
+                    className={classes.itemCover} 
+                    style={{backgroundImage:`url(${item.cover !== "" ? item.cover.url : deafaultCover})`}}
+                    >
+                    </div>
+                    <div className={classes.itemContent}>
+                      <span className={classes.title} >{item.title.substr(0, 49)}</span>
+                      <span className={classes.author}>{item.author.substr(0, 49)}</span>
+                    </div>
+                </Link>
+              ))}
+          </div>
+        )}
     </>
-
-  );
+  )
 }
 
+const mapStateToProps = state => ({
+  items: state.items
+});
+const mapDispatchToProps = dispatch =>
+  bindActionCreators({ fetchAllItems }, dispatch);
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(Sidebar);

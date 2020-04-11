@@ -10,17 +10,20 @@ import UserCard from '../../components/profile/userCard';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 import { getUserFollowers } from '../../actions/userActions';
+import LoadContent from '../../components/loaders/loadContent'
 
-function UserFollowers(props) {
-  useEffect(() => props.getUserFollowers(props.user._id), [props.user._id]);
+function UserFollowers({getUserFollowers, followers, user}) {
+  useEffect(() => getUserFollowers(user._id), [user._id, getUserFollowers]);
 
   return (
     <>
-      <Title title={`${props.user.name} - Seguidores`} />
+      <Title title={`${user.username} - Seguidores`} />
+
+      <LoadContent loading={false}>
       <Grid container spacing={2}>
-        {props.followers && !isEmpty(props.followers) ? (
-          props.followers.map(user => (
-            <Grid item xs={6} md={4} lg={3} key={`follower-${user._id}`}>
+        {followers && !isEmpty(followers) ? (
+          followers.map((user,key) => (
+            <Grid item xs={6} md={4} lg={3} key={`follower-${key}`}>
               <UserCard user={user} />
             </Grid>
           ))
@@ -32,6 +35,7 @@ function UserFollowers(props) {
             </Grid>
           )}
       </Grid>
+      </LoadContent>
     </>
   );
 }

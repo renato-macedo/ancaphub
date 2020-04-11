@@ -4,19 +4,23 @@ import ShowPosts from '../../components/posts/showPosts';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 import { loadUserPosts } from '../../actions/postActions';
+import LoadContent from '../../components/loaders/loadContent'
 
-function UserFeed(props) {
-  useEffect(() => props.loadUserPosts(props.user._id), [props.user._id]);
+function UserFeed({loadUserPosts, isUserLoggedProfile, posts, user}) {
+  useEffect(() => loadUserPosts(user._id), [user._id, loadUserPosts]);
 
   return (
-    <React.Fragment>
-      {props.isUserLoggedProfile && <PostNewStatus user={props.user} />}
-      <ShowPosts posts={props.posts} />
-    </React.Fragment>
+    <>
+      {isUserLoggedProfile && <PostNewStatus user={user} />}
+      
+      <LoadContent loading={posts.loading}>
+        <ShowPosts posts={posts.posts} />
+      </LoadContent>
+    </>
   );
 }
 
-const mapStateToProps = state => ({ posts: state.posts.posts });
+const mapStateToProps = state => ({ posts: state.posts });
 const mapDispatchToProps = dispatch =>
   bindActionCreators({ loadUserPosts }, dispatch);
 

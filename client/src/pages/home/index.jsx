@@ -1,138 +1,80 @@
-import React, { Fragment, useEffect } from 'react';
-import {
-  Box,
-  Typography,
-  Grid,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemAvatar,
-  Link as MaterialLink,
-  Hidden
-} from '@material-ui/core';
-import { Link } from 'react-router-dom';
-import deafaultCover from '../../assets/images/default-thumbnail.jpg'
-import Template from '../../components/template';
+import React, { useState } from 'react'
+import { Box, Grid, Typography, Tabs, Tab, Container } from '@material-ui/core'
+import { makeStyles } from '@material-ui/core/styles'
+import SwipeableViews from 'react-swipeable-views';
+import Login from '../../components/auth/login';
+import Signup from '../../components/auth/signup';
 import Title from '../../components/template/titleComponent'
-import ShowPosts from '../../components/posts/showPosts';
-import LoadingItems from '../../components/loaders/loadingItems'
-import { bindActionCreators } from 'redux';
-import { connect } from 'react-redux';
-import { loadUserFeed, loadAllPublicPosts } from '../../actions/postActions';
-import { fetchAllItems } from '../../actions/itemActions';
+import {
+  FolderOutlined as LibraryIcon,
+  GroupOutlined as GroupIcon,
+  EventOutlined as EventIcon,
+  LocationSearching as LocationSearchIcon
+} from '@material-ui/icons';
 
-function Home(props) {
-  const AdapterLink = React.forwardRef((props, ref) => (
-    <Link innerRef={ref} {...props} />
-  ));
-  const types = {
-    book: 'livro',
-    article: 'artigo',
-    video: 'video',
-    podcast: 'podcast'
-  };
+const useStyles = makeStyles({
+  features: {
+    margin: 0,
+    padding: 0
+  },
+  feature: {
+    listStyle: 'none',
+    fontSize: 21,
+    padding: '5px 0px',
+    display: 'flex',
+    alignItems: 'center'
+  },
+  featureIcon: {
+    marginRight: 10,
+  }
+})
 
-  useEffect(() => {
-    if (!props.auth.loading) {
-      if (props.auth.isAuthenticated) {
-        props.loadUserFeed();
-      } else {
-        props.loadAllPublicPosts()
-      }
-    }
-  }, [props.auth.isAuthenticated, props.auth.loading]);
+const Home = props => {
+  const [value, setValue] = useState(0);
+  const classes = useStyles()
+  function handleChange(event, newValue) {
+    setValue(newValue);
+  }
 
-  useEffect(() => {
-    props.fetchAllItems({ pageSize: 5 });
-  }, [])
+  function handleChangeIndex(index) {
+    setValue(index);
+  }
 
   return (
-    <Template>
-      <Title />
-      <Grid container spacing={4}>
-        <Grid item xs={12} sm={8}>
-          {props.auth.loading || props.posts.loading ? (
-            <LoadingItems />
-          ) : (
-              <Fragment>
-                {props.auth.isAuthenticated ? (
-                  <ShowPosts posts={props.posts.posts} loading={props.posts.loading} />
-                ) : (
-                    <Box p={2}>
-                      <Typography variant="body1" gutterBottom>Exibindo postagens públicas. Faça login para ver seu feed personalizado.</Typography>
-                      <ShowPosts posts={props.posts.posts} loading={props.posts.loading} />
-                    </Box>
-                  )}
-              </Fragment>
-            )}
-
-
+    <Container>
+      <Title title="AncapHub - HUB de conteúdo Libertário" />
+      <Grid container>
+        <Grid item xs={12} md={6}>
+          <Box textAlign="left" pr={5} pt={5}>
+            <Typography variant="h3" gutterBottom style={{ fontWeight: 'bold' }}>Bem vindo à versão de testes do AncapHub!</Typography>
+            <ul className={classes.features}>
+              <li className={classes.feature}><LibraryIcon className={classes.featureIcon} /><span>Tenha à sua disposição milhares de materiais para estudo.</span></li>
+              <li className={classes.feature}><LocationSearchIcon className={classes.featureIcon} /><span>Conheça libertários que morem perto de você.</span></li>
+              <li className={classes.feature}><GroupIcon className={classes.featureIcon} /><span>Crie e participe de grupos de estudo.</span></li>
+              <li className={classes.feature}><EventIcon className={classes.featureIcon} /><span>Confira eventos libertários que irão rolar.</span></li>
+            </ul>
+          </Box>
         </Grid>
-
-        <Grid item sm={4}>
-          <Hidden xsDown implementation="css">
-            <Box mb={0.5}>
-              <Typography variant="h6" component="h2">
-                Últimas contribuições
-            </Typography>
-            </Box>
-            {props.items.loading ? (
-              <Box pt={2}>
-                <LoadingItems />
-              </Box>
-            ) : (
-                <List disablePadding>
-                  {props.items.allItems.items &&
-                    props.items.allItems.items.map(item => (
-                      <ListItem alignItems="flex-start" disableGutters key={item._id}>
-                        <ListItemAvatar
-                          style={{
-                            height: '60px',
-                            width: '40px',
-                            background: `url(${item.cover ? item.cover.url : deafaultCover})`,
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                            marginRight: '10px'
-                          }}
-                        />
-                        <ListItemText
-                          primary={
-                            <Typography
-                              variant="subtitle2"
-                              noWrap>
-                              <MaterialLink
-                                color="textPrimary"
-                                component={AdapterLink}
-                                to={`/${types[item.type]}s/${types[item.type]}/${
-                                  item._id
-                                  }`}>
-                                {item.title}
-                              </MaterialLink>
-                            </Typography>
-                          }
-                          secondary={item.author}
-                        />
-                      </ListItem>
-                    ))}
-                </List>
-              )}
-          </Hidden>
+        <Grid item xs={12} md={6}>
+          <Box p={3}>
+            <Tabs
+              value={value}
+              onChange={handleChange}
+              indicatorColor="secondary"
+              textColor="textSecondary"
+              variant="fullWidth">
+              <Tab label="Cadastro" id="signup-tab" aria-controls="full-width-tabpanel-signup" />
+              <Tab label="Entrar" id="signin-tab" aria-controls="full-width-tabpanel-signin" />
+            </Tabs>
+            <SwipeableViews index={value} onChangeIndex={handleChangeIndex}>
+              <Signup id="full-width-tabpanel-signup" aria-labelledby="signup-tab" />
+              <Login id="full-width-tabpanel-signin" aria-labelledby="signin-tab" />
+            </SwipeableViews>
+          </Box>
         </Grid>
-
       </Grid>
-    </Template>
-  );
+    </Container>
+  )
 }
 
-const mapStateToProps = state => ({
-  auth: state.auth,
-  posts: state.posts,
-  items: state.items
-});
-const mapDispatchToProps = dispatch =>
-  bindActionCreators({ loadUserFeed, loadAllPublicPosts, fetchAllItems }, dispatch);
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(Home);
+export default Home

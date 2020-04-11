@@ -1,74 +1,80 @@
-import {
-  GET_ALL_USERS_SUCCESS,
-  GET_USER_SUCCESS,
-  GET_USER_FAIL,
-  UPDATE_USER_SUCCESS,
-  GET_USER_FOLLOWERS_SUCCESS,
-  GET_USER_COLLECTION_SUCCESS,
-  GET_USER_FOLLOWING_SUCCESS,
-  GET_USER_CONTRIBUTIONS_SUCCESS,
-  SEARCH_NEARBY_USERS,
-  LOADING_USERS
-} from '../utils/types';
+import types from '../actions/_types'
 
-const initialState = {
+const INITIAL_STATE = {
   allUsers: [],
   user: null,
-  loading: true
+  loading: false
 };
 
-export default function (state = initialState, action) {
+export default function (state = INITIAL_STATE, action) {
   const { type, payload } = action;
   switch (type) {
-    case LOADING_USERS:
+    case types.LOADING_USERS:
       return {
         ...state,
         loading: true
       }
-    case SEARCH_NEARBY_USERS:
-    case GET_ALL_USERS_SUCCESS:
+    case types.SEARCH_NEARBY_USERS:
+    case types.GET_ALL_USERS_SUCCESS:
       return {
         ...state,
         allUsers: payload,
         loading: false
       };
-    case GET_USER_SUCCESS:
+    case types.GET_USER_SUCCESS:
       return {
         ...state,
         user: payload,
         loading: false
       };
-    case GET_USER_FAIL:
+    case types.GET_USER_FAIL:
       return {
         ...state,
         user: null,
         loading: false
       };
-    case UPDATE_USER_SUCCESS:
+    case types.UPDATE_USER_SUCCESS:
+    case types.UPDATE_PROFILE_PICTURE_SUCCESS:  
       return {
         ...state,
         user: { ...state.user, ...payload }
       };
-    case GET_USER_FOLLOWERS_SUCCESS:
+    case types.GET_USER_FOLLOWERS_SUCCESS:
       return {
         ...state,
         user: { ...state.user, followers: payload }
       };
-    case GET_USER_FOLLOWING_SUCCESS:
+    case types.GET_USER_FOLLOWING_SUCCESS:
       return {
         ...state,
         user: { ...state.user, following: payload }
       };
-    case GET_USER_COLLECTION_SUCCESS:
+    case types.GET_USER_LIBRARY_SUCCESS:
       return {
         ...state,
-        user: { ...state.user, personalCollection: payload.personalCollection }
+        user: { ...state.user, personalLibrary: payload.items }
       };
-    case GET_USER_CONTRIBUTIONS_SUCCESS:
+    case types.GET_USER_CONTRIBUTIONS_SUCCESS:
       return {
         ...state,
-        user: { ...state.user, contributions: payload }
+        user: { ...state.user, contributions: payload.items }
       };
+    case types.ADD_ITEM_TO_LIBRARY_SUCCESS:
+    case types.ADD_BOOKMARK_SUCCESS:
+      if (payload.location === 'user-contributions' || payload.location === 'user-library') {
+        return {
+          ...state,
+          user: {
+            ...state.user,
+            contributions: payload.location === 'user-contributions' ? state.user.contributions.map(item =>
+              item._id === payload.item._id ? { ...item, ...payload.item } : item
+            ) : state.user.contributions,
+            personalLibrary: payload.location === 'user-library' ? state.user.personalLibrary.map(item =>
+              item._id === payload.item._id ? { ...item, ...payload.item } : item
+            ) : state.user.personalLibrary
+          }
+        };
+      }
     default:
       return state;
   }

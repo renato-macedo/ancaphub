@@ -66,11 +66,11 @@ const BorderLinearProgress = withStyles({
 
 export default ({ field, form, ...props }) => {
   const classes = useStyles()
-  const { values, setFieldValue } = form;
+  const { setFieldValue } = form;
   const [uploadedFiles, setUploadedFiles] = useState([]);
 
   const getFiles = async (files) => {
-    await axios.get(`/api/upload?${querystring.stringify({ 'files': JSON.stringify(files) })}`)
+    await axios.get(`/api/files?${querystring.stringify({ 'files': JSON.stringify(files) })}`)
       .then(result =>
         setUploadedFiles(result.data.map(file => ({
           id: file._id,
@@ -84,7 +84,7 @@ export default ({ field, form, ...props }) => {
   }
 
   useEffect(() => {
-    if (field.value != "") {
+    if (field.value !== "") {
       getFiles(field.value)
     }
   }, [])
@@ -95,7 +95,7 @@ export default ({ field, form, ...props }) => {
 
 
   useEffect(() => {
-    if (form.status == "sending") {
+    if (form.status === "sending") {
       setUploadedFiles([])
     }
   }, [form.status])
@@ -139,7 +139,7 @@ export default ({ field, form, ...props }) => {
     data.append('file', uploadedFile.file, uploadedFile.name);
 
     axios
-      .post('/api/upload', data, {
+      .post('/api/files', data, {
         onUploadProgress: e => {
           const progress = parseInt(Math.round((e.loaded * 100) / e.total));
 

@@ -1,37 +1,20 @@
 import axios from '../services/api';
-import {
-  LOADING_POSTS,
-  ADD_POST_SUCCESS,
-  LOAD_USER_POSTS_SUCCESS,
-  LOAD_PUBLIC_POSTS_SUCCESS,
-  LOAD_USER_FEED_SUCCESS,
-  UPDATE_LIKES_SUCCESS,
-  UPDATE_LIKES_ERROR,
-  DELETE_POST_SUCCESS,
-  DELETE_POST_ERROR
-} from '../utils/types';
+import types from './_types'
 
-export function loadAllPublicPosts() {
-  return dispatch => {
-    dispatch({ type: LOADING_POSTS });
-    axios
-      .get(`/api/posts/public`)
-      .then(function (posts) {
-        dispatch({ type: LOAD_PUBLIC_POSTS_SUCCESS, payload: posts.data });
-      })
-      .catch(function (error) {
-        console.error('Erro ao carregar postagens: ', error);
-      });
-  };
-}
+export function loadUserFeed(props) {
+  const pageSize = props && (props.pageSize || 10)
+  const currentPage = props && (props.currentPage || 1)
 
-export function loadUserFeed() {
   return dispatch => {
-    dispatch({ type: LOADING_POSTS });
+    dispatch({ type: types.LOADING_POSTS });
     axios
-      .get(`/api/posts/feed`)
+      .get(`/api/posts/auth/feed`, { params: { pageSize, currentPage } })
       .then(function (posts) {
-        dispatch({ type: LOAD_USER_FEED_SUCCESS, payload: posts.data });
+        if(currentPage > 1){
+          dispatch({ type: types.LOAD_MORE_POSTS_SUCCESS, payload: posts.data });
+        } else {
+          dispatch({ type: types.LOAD_USER_FEED_SUCCESS, payload: posts.data });
+        }
       })
       .catch(function (error) {
         console.error('Erro ao carregar postagens: ', error);
@@ -41,11 +24,11 @@ export function loadUserFeed() {
 
 export function loadUserPosts(user) {
   return dispatch => {
-    dispatch({ type: LOADING_POSTS });
+    dispatch({ type: types.LOADING_POSTS });
     axios
       .get(`/api/posts/user/${user}`)
       .then(function (posts) {
-        dispatch({ type: LOAD_USER_POSTS_SUCCESS, payload: posts.data });
+        dispatch({ type: types.LOAD_USER_POSTS_SUCCESS, payload: posts.data });
       })
       .catch(function (error) {
         console.error('Erro ao carregar postagens: ', error);
@@ -53,15 +36,18 @@ export function loadUserPosts(user) {
   };
 }
 
-export function createPost({ content }) {
+export function createPost(content) {
   return dispatch => {
     axios
       .post(`/api/posts`, { content })
       .then(function (result) {
-        dispatch({ type: ADD_POST_SUCCESS, payload: result.data });
+        dispatch({ type: types.ADD_POST_SUCCESS, payload: result.data });
       })
-      .catch(function (error) {
-        console.error('Erro ao adicionar postagem: ', error);
+      .catch(function (err) {
+        dispatch({
+          type: types.ADD_POST_FAILURE,
+          payload: err.response.data.message
+        })
       });
   };
 }
@@ -71,10 +57,13 @@ export function deletePost(post) {
     axios
       .delete(`/api/posts/${post}`)
       .then(result => {
-        dispatch({ type: DELETE_POST_SUCCESS, payload: post });
+        dispatch({ type: types.DELETE_POST_SUCCESS, payload: post });
       })
-      .catch(error => {
-        dispatch({ type: DELETE_POST_ERROR });
+      .catch(err => {
+        dispatch({ 
+          type: types.DELETE_POST_ERROR,
+          payload: err.response.data.message
+        });
       });
   };
 }
@@ -82,12 +71,48 @@ export function deletePost(post) {
 export function updateLikes(post) {
   return dispatch => {
     axios
-      .put(`/api/posts/${post}/like`)
+      .post(`/api/posts/${post}/like`)
       .then(result => {
-        dispatch({ type: UPDATE_LIKES_SUCCESS, payload: result.data });
+        dispatch({ type: types.UPDATE_LIKES_SUCCESS, payload: result.data });
       })
-      .catch(error => {
-        dispatch({ type: UPDATE_LIKES_ERROR });
+      .catch(err => {
+        dispatch({ 
+          type: types.UPDATE_LIKES_ERROR,
+          payload: err.response.data.message
+        });
+      });
+  };
+}
+
+export function loadSinglePost(post){
+  return dispatch => {
+    dispatch({ type: types.LOAD_SINGLE_POST })
+    axios
+      .get(`/api/posts/${post}`)
+      .then(result => {
+        dispatch({ type: types.LOAD_SINGLE_POST_SUCCESS, payload: result.data })
+      })
+      .catch(err => {
+        dispatch({
+          type: types.LOAD_SINGLE_POST_FAIL,
+          payload: err.response.data.message
+        })
+      })
+  }
+}
+
+export function addComment(post, content) {
+  return dispatch => {
+    axios
+      .post(`/api/posts/${post}/comment`, content)
+      .then(comments => {
+        dispatch({ type: types.ADD_COMMENT_SUCCESS, payload: comments.data });
+      })
+      .catch(err => {
+        dispatch({ 
+          type: types.ADD_COMMENT_FAILURE,
+          payload: err.response.data.message
+        });
       });
   };
 }

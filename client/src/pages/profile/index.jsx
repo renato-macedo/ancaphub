@@ -1,5 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
+
+// Material Components
 import {
+  Container,
   Grid,
   Box,
   Typography,
@@ -10,51 +13,70 @@ import {
   Link as MaterialLink,
   Tabs,
   Tab,
-  CircularProgress
+  Dialog,
+  DialogContent
 } from '@material-ui/core';
+import { makeStyles } from '@material-ui/core/styles'
+
+// Material Icons
 import {
   LocationOn as LocationIcon,
   Link as SiteIcon,
   Cake as BirthDayIcon
 } from '@material-ui/icons';
-import { makeStyles } from '@material-ui/core/styles'
-import { fade } from '@material-ui/core/styles/colorManipulator';
-import { Link } from 'react-router-dom';
-import Template from '../../components/template';
+
+// Custom Components
 import Title from '../../components/template/titleComponent'
+import UnavaliableContent from '../../components/error/unavaliableContent'
 import ProfilePicture from '../../components/profile/profilePicture';
 import EditProfile from '../../components/profile/editProfile';
 import FollowButton from '../../components/profile/followButton';
+import Loader from '../../components/loaders/loadingItems'
+import LoadContent from '../../components/loaders/loadContent'
+import defaultProfilePicture from '../../assets/images/defaultProfilePicture.png';
+import ShowName from '../../components/profile/showName'
+// Profile Pages
 import UserFeed from './userFeed';
-import UserCollection from './userCollection';
+import UserLibrary from './userLibrary';
 import UserContributions from './userContributions';
 import UserFollowers from './userFollowers';
 import UserFollowing from './userFollowing';
-import LoadingItems from '../../components/loaders/loadingItems'
+
+//Redux
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { getUser } from '../../actions/userActions';
+
+// Others
+import { Link } from 'react-router-dom';
 import moment from 'moment';
 
 const useStyles = makeStyles(theme => ({
   icon: {
-    minWidth: '34px'
+    minWidth: '34px',
+    color: 'inherit'
   },
-  infoIcon: { color: fade(theme.palette.common.black, 0.50) }
+  infoText: { overflow: "hidden" }
 }));
 
-function Profile(props) {
+function Profile({ getUser, auth, user, match}) {
   const classes = useStyles()
-  useEffect(() => props.getUser(props.match.params.id), [
-    props.match.params.id
-  ]);
+  const [openProfilePicture, setOpenProfilePicture] = useState(false)
 
+  const { id } = match.params
+  useEffect(() => getUser(id), [getUser, id])
+
+  const handleProfilePicture = () => {
+    setOpenProfilePicture(state => !state)
+  }
+  
   const AdapterLink = React.forwardRef((props, ref) => (
     <Link innerRef={ref} {...props} />
   ));
   const {
     _id,
     name,
+    username,
     bio,
     site,
     birthday,
@@ -62,196 +84,188 @@ function Profile(props) {
     avatar,
     followersCount,
     followingCount
-  } = props.user.user || {};
+  } = user.user || {};
   const isUserLoggedProfile =
-    props.auth.isAuthenticated &&
-    props.user.user &&
-    props.user.user._id === props.auth.user._id;
+    auth.isAuthenticated &&
+    user.user &&
+    user.user._id === auth.user._id;
 
   function showComponent() {
-    if (!props.user.isLoading && !props.auth.loading) {
-      switch (props.match.path) {
-        case '/usuario/:id':
+    if (!user.isLoading && !auth.loading) {
+      switch (match.path) {
+        case '/:id':
           return (
             <UserFeed
-              user={props.user.user}
+              user={user.user}
               isUserLoggedProfile={isUserLoggedProfile}
             />
           );
-        case '/usuario/:id/followers':
-          return <UserFollowers user={props.user.user} />;
-        case '/usuario/:id/following':
-          return <UserFollowing user={props.user.user} />;
-        case '/usuario/:id/collection':
-          return <UserCollection user={props.user.user} />;
-        case '/usuario/:id/contributions':
-          return <UserContributions user={props.user.user} />;
+        case '/:id/followers':
+          return <UserFollowers user={user.user} />;
+        case '/:id/following':
+          return <UserFollowing user={user.user} />;
+        case '/:id/library':
+          return <UserLibrary user={user.user} />;
+        case '/:id/contributions':
+          return <UserContributions user={user.user} />;
         default:
-          console.log(props.match.path);
+          return <p>URL INCORRETA</p>
       }
     } else {
       return (
-        <Box mx="auto" my="auto">
-          <CircularProgress />
-        </Box>
+        <Loader />
       );
     }
   }
 
   return (
-    <Template>
-      {props.user.loading ? (
-        <Box width="100%" height="100%" display="flex" alignContent="center" justifyContent="center">
-          <LoadingItems />
-        </Box>
-      ) : (
-          <>
-            {props.user.user === null ? (
-              <>
-                <Title title="Perfil não encontrado" />
-                <Box
-                  justifyContent="center"
-                  alignItems="center"
-                  width={1}
-                  height="100%">
-                  <Typography variant="h4">Erro 404</Typography>
-                  <Typography variant="body2">Perfil Não Encontrado</Typography>
-                </Box>
-              </>
-            ) : (
-                <>
-                  <Title title={name} />
-                  <Grid container spacing={4}>
-                    <Grid item xs={12} sm={5} md={4} lg={3}>
-                      <Box
-                        display="flex"
-                        alignItems="center"
-                        flexDirection="column"
-                        textAlign="center"
-                      >
-                        <ProfilePicture
-                          avatar={avatar}
-                          width="120px"
-                          height="120px"
-                        />
-                        <Box my={2}>
-                          <Typography variant="h6" style={{ fontWeight: 'bold' }}>{name}</Typography>
-                          <Typography variant="body2">{bio}</Typography>
-                        </Box>
-                        <Box display="flex">
-                          <div
-                            style={{
-                              paddingRight: '15px',
-                              borderRight: '1px solid #d8d8d8'
-                            }}>
-                            <MaterialLink
-                              component={AdapterLink}
-                              color="textPrimary"
-                              to={`/usuario/${_id}/following`}>
-                              <Typography variant="body2" style={{ fontWeight: 'bold' }}>
-                                {followingCount}
-                              </Typography>
-                              <Typography variant="subtitle2">Seguindo</Typography>
-                            </MaterialLink>
-                          </div>
-                          <div style={{ paddingLeft: '15px' }}>
-                            <MaterialLink
-                              component={AdapterLink}
-                              color="textPrimary"
-                              to={`/usuario/${_id}/followers`}>
-                              <Typography variant="body2" style={{ fontWeight: 'bold' }}>
-                                {followersCount}
-                              </Typography>
-                              <Typography variant="subtitle2">Seguidores</Typography>
-                            </MaterialLink>
-                          </div>
-                        </Box>
-                      </Box>
-                      {(currentCity || site || birthday) && (
-                        <Box mt={2}>
-                          <List disablePadding>
-                            {currentCity && (
-                              <ListItem>
-                                <ListItemIcon classes={{ root: classes.icon }}>
-                                  <LocationIcon className={classes.infoIcon} />
-                                </ListItemIcon>
-                                <ListItemText primary={currentCity} />
-                              </ListItem>
-                            )}
-
-                            {site && (
-                              <ListItem>
-                                <ListItemIcon classes={{ root: classes.icon }}>
-                                  <SiteIcon className={classes.infoIcon} />
-                                </ListItemIcon>
-                                <ListItemText
-                                  primary={
-                                    <MaterialLink target="_blank" href={site} color="textPrimary">
-                                      {site}
-                                    </MaterialLink>
-                                  }
-                                />
-                              </ListItem>
-                            )}
-
-                            {birthday && (
-                              <ListItem>
-                                <ListItemIcon classes={{ root: classes.icon }}>
-                                  <BirthDayIcon className={classes.infoIcon} />
-                                </ListItemIcon>
-                                <ListItemText primary={moment(birthday).locale('pt-br').format('L')} />
-                              </ListItem>
-                            )}
-                          </List>
-                        </Box>
-                      )}
-                      <Box mt={2} px={2}>
-                        {props.auth.isAuthenticated && (
-                          <React.Fragment>
-                            {isUserLoggedProfile ? (
-                              <EditProfile data={props.user.user} />
-                            ) : (
-                                <FollowButton profile={props.user.user} />
-                              )}
-                          </React.Fragment>
+    <Container>
+      <Box mt={2}>
+      <LoadContent loading={user.loading}>
+        {user.user === null ? (
+          <UnavaliableContent />
+        ) : (
+            <>
+              <Title title={username} />
+              <Dialog open={openProfilePicture} onClose={handleProfilePicture}>
+                  <img src={avatar != "" ? avatar : defaultProfilePicture} style={{ width: '100%', height: "auto"}}/>
+              </Dialog>
+              <Grid container spacing={4}>
+                <Grid item xs={12} sm={5} md={4} lg={3}>
+                  <Box
+                    display="flex"
+                    alignItems="center"
+                    flexDirection="column"
+                    textAlign="center"
+                  >
+                    <ProfilePicture
+                      avatar={avatar}
+                      style={{cursor: 'pointer'}}
+                      width="120px"
+                      height="120px"
+                      onClick={handleProfilePicture}
+                    />
+                    <Box my={2}>
+                      <Typography variant="h6" style={{ fontWeight: 'bold' }}>
+                        <ShowName user={user.user} fontSize={18}/>
+                      </Typography>
+                      <Typography  style={{fontSize: '15px', color: "#aaa"}} gutterBottom>@{username}</Typography>
+                      <Typography variant="body2">{bio}</Typography>
+                    </Box>
+                    <Box display="flex">
+                      <div
+                        style={{
+                          paddingRight: '15px',
+                          borderRight: '1px solid #d8d8d8'
+                        }}>
+                        <MaterialLink
+                          component={AdapterLink}
+                          color="textPrimary"
+                          to={`/${_id}/following`}>
+                          <Typography variant="body2" style={{ fontWeight: 'bold' }}>
+                            {followingCount}
+                          </Typography>
+                          <Typography variant="subtitle2">Seguindo</Typography>
+                        </MaterialLink>
+                      </div>
+                      <div style={{ paddingLeft: '15px' }}>
+                        <MaterialLink
+                          component={AdapterLink}
+                          color="textPrimary"
+                          to={`/${_id}/followers`}>
+                          <Typography variant="body2" style={{ fontWeight: 'bold' }}>
+                            {followersCount}
+                          </Typography>
+                          <Typography variant="subtitle2">Seguidores</Typography>
+                        </MaterialLink>
+                      </div>
+                    </Box>
+                  </Box>
+                  {(currentCity || site || birthday) && (
+                    <Box mt={2}>
+                      <List disablePadding>
+                        {currentCity && (
+                          <ListItem>
+                            <ListItemIcon classes={{ root: classes.icon }}>
+                              <LocationIcon className={classes.infoIcon} />
+                            </ListItemIcon>
+                            <ListItemText primary={currentCity} className={classes.infoText} />
+                          </ListItem>
                         )}
-                      </Box>
-                    </Grid>
 
-                    <Grid item xs={12} sm={7} md={8} lg={9}>
-                      <Tabs
-                        indicatorColor="secondary"
-                        textColor="secondary"
-                        value={props.match.path}>
-                        <Tab
-                          component={AdapterLink}
-                          to={`/usuario/${_id}/`}
-                          label="Feed"
-                          value="/usuario/:id"
-                        />
-                        <Tab
-                          component={AdapterLink}
-                          to={`/usuario/${_id}/collection`}
-                          label="Coleção"
-                          value="/usuario/:id/collection"
-                        />
-                        <Tab
-                          component={AdapterLink}
-                          to={`/usuario/${_id}/contributions`}
-                          label="Contribuições"
-                          value="/usuario/:id/contributions"
-                        />
-                      </Tabs>
+                        {site && (
+                          <ListItem>
+                            <ListItemIcon classes={{ root: classes.icon }}>
+                              <SiteIcon className={classes.infoIcon} />
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={
+                                <MaterialLink target="_blank" href={site} color="textPrimary">
+                                  {site}
+                                </MaterialLink>
+                              }
+                              className={classes.infoText}
+                            />
+                          </ListItem>
+                        )}
 
-                      <Box py={2}>{showComponent()}</Box>
-                    </Grid>
-                  </Grid>
-                </>
-              )}
-          </>
-        )}
+                        {birthday && (
+                          <ListItem>
+                            <ListItemIcon classes={{ root: classes.icon }}>
+                              <BirthDayIcon className={classes.infoIcon} />
+                            </ListItemIcon>
+                            <ListItemText className={classes.infoText} primary={moment.utc(birthday).format('L')} />
+                          </ListItem>
+                        )}
+                      </List>
+                    </Box>
+                  )}
+                  <Box mt={2} px={2}>
+                    {auth.isAuthenticated && (
+                      <React.Fragment>
+                        {isUserLoggedProfile ? (
+                          <EditProfile data={user.user} />
+                        ) : (
+                            <FollowButton profile={user.user} />
+                          )}
+                      </React.Fragment>
+                    )}
+                  </Box>
+                </Grid>
 
-    </Template>
+                <Grid item xs={12} sm={7} md={8} lg={9}>
+                  <Tabs
+                    indicatorColor="secondary"
+                    textColor="secondary"
+                    value={match.path}>
+                    <Tab
+                      component={AdapterLink}
+                      to={`/${_id}/`}
+                      label="Feed"
+                      value="/:id"
+                    />
+                    <Tab
+                      component={AdapterLink}
+                      to={`/${_id}/library`}
+                      label="Coleção"
+                      value="/:id/library"
+                    />
+                    <Tab
+                      component={AdapterLink}
+                      to={`/${_id}/contributions`}
+                      label="Contribuições"
+                      value="/:id/contributions"
+                    />
+                  </Tabs>
+
+                  <Box py={2}>{showComponent()}</Box>
+                </Grid>
+              </Grid>
+            </>
+          )}
+      </LoadContent>
+      </Box>
+    </Container>
   );
 }
 

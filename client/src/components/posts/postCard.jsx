@@ -1,171 +1,181 @@
 import React from 'react';
+
+// Material-UI Components
 import {
   IconButton,
-  Typography,
   Card,
   CardHeader,
   CardContent,
-  CardMedia,
-  CardActionArea,
   CardActions,
   Box,
   Menu,
   MenuItem,
-  Link
+  Button,
+  Link as MDLink
 } from '@material-ui/core';
+import { makeStyles } from '@material-ui/core/styles'
+
+// Material-UI Icons
 import {
-  Favorite as FavoriteIcon,
-  FavoriteBorder as NotFavoriteIcon,
-  MoreVert as MoreVertIcon
+  MoreVert as MoreVertIcon,
+  CommentOutlined as CommentIcon
 } from '@material-ui/icons';
-import { Link as RouterLink } from 'react-router-dom';
-import striptags from 'striptags';
-import ProfilePicture from '../profile/profilePicture';
+
+// Redux
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 import { deletePost, updateLikes } from '../../actions/postActions';
+
+// Other
 import moment from 'moment-timezone/builds/moment-timezone-with-data';
+import { Link } from 'react-router-dom';
 import ptBr from 'moment/locale/pt-br'
+import isEmpty from 'is-empty'
 
-function ActivityCard(props) {
+// Custom Components
+import ProfilePicture from '../profile/profilePicture';
+import LikeButton from './likeButton'
+import ShowLikes from './showLikes'
+import CommentBox from './commentBox'
+import ShowName from '../profile/showName'
 
-  const {
-    _id,
-    content,
-    type,
-    extraFields,
-    user,
-    likes = [],
-    createdAt
-  } = props.post;
+// Templates
+import Status from './templates/status'
+import ItemAddedToLibrary from './templates/itemAddedToLibrary'
+
+const templates = {
+  library_item: () => ItemAddedToLibrary,
+  status: () => Status
+}
+
+const activities = {
+  status: null,
+  library_item: 'adicionou um item à sua coleção particular'
+};
+
+const useStyles = makeStyles(theme => ({
+  postActions: {
+    width: '100%',
+    flexWrap: 'wrap',
+    justifyContent:"space-between",
+    display: 'flex',
+    alignItems: 'center',
+    padding: '0px 0px 0px 3px',
+    margin: 0
+  },
+  postAction: {
+    display: 'flex',
+    listStyle: 'none',
+    marginRight: 8
+  },
+  userName: {
+    fontWeight: 'bold', 
+    color: "inherit", 
+    textDecoration: 'none',
+    fontSize: 15
+  },
+  counters: {
+    marginLeft: 5,
+    cursor: 'pointer'
+  },
+  verifiedUser: {
+    background: theme.palette.secondary.main,
+    borderRadius: 15,
+    color: 'white',
+    padding:'5px 10px',
+    marginRight: 5,
+  }
+}))
+
+function ActivityCard({ post, authUser, deletePost, updateLikes }) {
+  const { _id, type, user, createdAt, likeCount} = post;
+  const ownProfile = authUser.isAuthenticated && user._id === authUser.user._id;
+  const Template = !isEmpty(post) ? templates[type]() : <p>Ocorreu um Erro</p>
   const [anchorEl, setAnchorEl] = React.useState(null);
+  const [expanded, setExpanded] = React.useState(false);
+  const [showLikesState, setShowLikesState] = React.useState(false);
+  const classes = useStyles()
 
-  const activities = {
-    status: null,
-    collection_item: 'adicionou um item à sua coleção particular'
-  };
-
-  const types = {
-    book: 'livro',
-    article: 'artigo',
-    video: 'video',
-    podcast: 'podcas'
-  };
-
-  function handleClick(event) {
-    setAnchorEl(event.currentTarget);
+  const handleAnchor = (event) => {
+    setAnchorEl(anchorEl == null ? event.currentTarget : null);
   }
 
-  function handleClose() {
-    setAnchorEl(null);
+  const handleCommentBox = () => {
+    setExpanded(!expanded)
   }
 
-  const isUserLoggedProfile =
-    props.authUser.isAuthenticated && user._id === props.authUser.user._id;
+  const handleShowLikes = () => {
+    setShowLikesState(!showLikesState)
+  }
 
-  function handleDelete() {
+  const handleDelete = () => {
     const confirm = window.confirm('Você realmente deseja excluir a postagem?');
 
     if (confirm) {
-      props.deletePost(_id);
+      deletePost(_id);
     }
   }
 
   return (
     <Box mb={2}>
-      <Card>
+      <ShowLikes postId={_id} open={showLikesState} closeFunc={handleShowLikes}/>
+      <Card elevation={0}>
         <CardHeader
           avatar={
-            <Link
-              component={RouterLink}
-              to={`/usuario/${user._id}`}
-              underline="none"
-            >
-              <ProfilePicture avatar={user.avatar} width="40px" height="40px" />
-            </Link>
+            <ProfilePicture avatar={user.avatar} width="45px" height="45px" component={Link} to={`/${user._id}`} />
           }
           action={
-            isUserLoggedProfile && (
-              <IconButton aria-label="Settings" onClick={handleClick}>
+            ownProfile && (
+              <IconButton aria-label="Settings" onClick={handleAnchor}>
                 <MoreVertIcon />
               </IconButton>
             )
           }
           title={
-            <Link
-              component={RouterLink}
-              to={`/usuario/${user._id}`}
-              underline="none"
-              color="secondary">
-              <span style={{ fontWeight: 'bold' }}>{user.name + " "}</span>
+            <div style={{marginBottom: classes.verifiedUser && 5 }}>
+              <ShowName user={user} />
               <span style={{ fontSize: '13px', color: '#aaa' }}>
-                {activities[type]}
+                {` ${activities[type] || ''}`}
               </span>
-            </Link>
+            </div>
           }
           subheader={moment(createdAt).tz('America/Sao_Paulo').locale('pt-br', ptBr).startOf(createdAt).fromNow()}
         />
         <CardContent style={{ padding: '0px 16px' }}>
-          {type === 'status' && (
-            <Typography variant="body2" color="textSecondary" component="p">
-              {content}
-            </Typography>
-          )}
-
-          {type === 'collection_item' && (
-            <Card>
-              <CardActionArea
-                component={RouterLink}
-                to={`/${types[extraFields.type]}s/${types[extraFields.type]}/${
-                  extraFields._id
-                  }`}>
-                <CardMedia
-                  component="img"
-                  height="240"
-                  image={extraFields.cover}
-                />
-                <CardContent>
-                  <Typography gutterBottom variant="h5" component="h2">
-                    {extraFields.title}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    color="textSecondary"
-                    component="p">
-                    {`${striptags(
-                      extraFields.description.substring(0, 240)
-                    )}...`}
-                  </Typography>
-                </CardContent>
-              </CardActionArea>
-            </Card>
-          )}
+          <Template post={post} />
         </CardContent>
-        <CardActions disableSpacing>
-          {props.authUser.isAuthenticated ? (
-            <>
-              <IconButton
-                aria-label="Curtir"
-                color="secondary"
-                size="small"
-                onClick={() => props.updateLikes(_id)}>
-                {!likes.includes(props.authUser.user._id) ? (
-                  <NotFavoriteIcon />
-                ) : (
-                    <FavoriteIcon />
-                  )}
-
-              </IconButton>
-              <Typography variant="body2" style={{ paddingLeft: '8px' }}>
-                {likes.length}
-              </Typography>
-            </>
-          ) : (
-              <Typography variant="body2" style={{ paddingLeft: '8px' }}>
-                {likes.length} curtida(s)
-            </Typography>
-            )}
+        <CardActions>
+          <ul className={classes.postActions}>
+            <li className={classes.postAction}>
+              <ul className={classes.postActions}>
+                <li className={classes.postAction}>
+                  <LikeButton post={post} action={updateLikes} />
+                </li>
+                <li  className={classes.postAction}>
+                  <Button startIcon={<CommentIcon />} onClick={handleCommentBox}>
+                    Comentar
+                  </Button>
+                </li>
+              </ul>
+            </li>
+            
+            <li className={classes.postAction}>
+              <ul className={classes.postActions}>
+                <li className={classes.postAction}>
+                <MDLink onClick={handleShowLikes} color="textPrimary">
+                {`${post.likeCount} ${post.likeCount > 1 ? "curtidas" : "curtida"}`}
+                </MDLink>
+              </li>
+              <li className={classes.postAction}>
+                <MDLink onClick={handleCommentBox} color="textPrimary">
+                  {`${post.comments.length} ${post.comments.length > 1 ? "comentários" : "comentário"}`}
+                </MDLink>
+              </li>
+              </ul>
+            </li>
+          </ul>
         </CardActions>
+        <CommentBox expanded={expanded} post={post}/>
       </Card>
 
       <Menu
@@ -173,7 +183,7 @@ function ActivityCard(props) {
         anchorEl={anchorEl}
         keepMounted
         open={Boolean(anchorEl)}
-        onClose={handleClose}>
+        onClose={handleAnchor}>
         <MenuItem onClick={handleDelete}>Excluir</MenuItem>
       </Menu>
     </Box>

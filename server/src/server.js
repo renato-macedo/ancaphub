@@ -3,7 +3,8 @@ require('./config/database');
 const express = require('express');
 const cors = require('cors');
 const server = express();
-
+const routes = require('./routes')
+const morgan = require('morgan')
 const port = process.env.PORT || 3000;
 const corsOptions = {
   optionsSuccessStatus: 200
@@ -11,27 +12,13 @@ const corsOptions = {
 
 server.use(express.json({ extended: false }));
 server.use(cors(corsOptions));
+server.use(morgan('tiny'));
+server.get('/', (req,res) => res.send("Bem vindo a API 1.0 do AncapHub"))
+server.use("/api", routes)
 
-// Rotas
-const items = require('./api/routes/ItemRoutes');
-const rates = require('./api/routes/RateRoutes');
-const categories = require('./api/routes/CategoryRoutes');
-const users = require('./api/routes/UsersRoutes');
-const posts = require('./api/routes/PostsRoutes');
-const file = require('./api/routes/FileRoutes');
-const auth = require('./api/routes/AuthRoutes');
-const notification = require('./api/routes/NotificationRoutes');
-const events = require('./api/routes/EventRoutes');
-
-server.use('/api/items/', items);
-server.use('/api/rates/', rates);
-server.use('/api/categories/', categories);
-server.use('/api/users/', users);
-server.use('/api/posts/', posts);
-server.use('/api/upload/', file);
-server.use('/api/auth/', auth);
-server.use('/api/notifications/', notification);
-server.use('/api/events/', events);
+server.use(function(err, req, res, next) {
+  res.status(500).json({ message: err.message});
+});
 
 server.use('/public', express.static('public'));
 

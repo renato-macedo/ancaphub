@@ -17,17 +17,12 @@ import { signUp } from '../../actions/authActions';
 const useStyles = makeStyles(theme => ({
   tab: {
     width: '100%',
+    overflow: "hidden",
     paddingTop: '10px',
     paddingBottom: '10px'
   },
   button: {
     marginTop: '10px'
-  },
-  errorMessage: {
-    padding: '10px',
-    borderRadius: '5px',
-    backgroundColor: theme.palette.secondary.main,
-    color: 'white'
   }
 }));
 
@@ -37,30 +32,28 @@ function SignUpForm(props) {
   const SignupSchema = Yup.object().shape({
     name: Yup.string()
       .min(3, 'Nome muito curto!')
-      .max(50, 'Nome muito longo!')
-      .required('O campo nome é obrigatório!'),
+      .max(30, 'Nome muito longo!')
+      .required('O campo NOME é obrigatório!'),  
+    username: Yup.string()
+      .min(3, 'Nome de usuário muito curto!')
+      .max(20, 'Nome de usuário muito longo!')
+      .matches(/^[a-zA-Z0-9_]+$/, "É permitido apenas letras, números e _ ")
+      .required('O campo NOME DE USUÁRIO é obrigatório!'),
     email: Yup.string()
       .email('E-mail inválido')
-      .required('O campo e-mail é obrigatório!'),
+      .required('O campo E-MAIL é obrigatório!'),
     password: Yup.string()
-      .required('O campo senha é obrigatório!')
+      .required('O campo SENHA é obrigatório!')
       .min(6, 'Sua senha precisa ter no mínimo 6 caracteres.'),
     password2: Yup.string()
-      .required('O campo confirmar senha é obrigatório!')
+      .required('O campo CONFIRMAR SENHA é obrigatório!')
       .oneOf([Yup.ref('password'), null], 'As senhas não coincidem')
   });
 
   return (
     <React.Fragment>
-      {props.serverErrors.alerts !== null &&
-        props.serverErrors.alerts.msg.map((msg, index) => (
-          <Box mb={1} key={index}>
-            <p className={classes.errorMessage}>{msg.msg}</p>
-          </Box>
-        ))}
-
       <Formik
-        initialValues={{ name: '', email: '', password: '', password2: '' }}
+        initialValues={{ name: "", username: '', email: '', password: '', password2: '' }}
         validationSchema={SignupSchema}
         onSubmit={(values, actions) => {
           props.signUp(values);
@@ -70,19 +63,19 @@ function SignUpForm(props) {
 
           return (
             <Form className={classes.tab}>
-              <Grid container>
+              <Grid container spacing={1} >
                 <Grid item xs={12}>
                   <TextField
-                    autoFocus
+                    color="secondary"
                     variant="outlined"
                     type="text"
-                    margin="normal"
+                    margin="none"
                     required
                     fullWidth
                     id="name"
-                    label="Nome Completo"
+                    label="Nome"
                     name="name"
-                    autoComplete="name"
+                    autoComplete="user"
                     value={values.name}
                     onChange={handleChange}
                     onBlur={handleBlur}
@@ -92,10 +85,30 @@ function SignUpForm(props) {
 
                 <Grid item xs={12}>
                   <TextField
-                    autoFocus
+                    color="secondary"
+                    variant="outlined"
+                    type="text"
+                    margin="none"
+                    required
+                    fullWidth
+                    id="username"
+                    label="Nome de Usuário"
+                    name="username"
+                    autoComplete="user"
+                    value={values.username}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    helperText={errors.username && touched.username && errors.username}
+                  />
+                </Grid>
+
+                <Grid item xs={12}>
+                  <TextField
+                  color="secondary"
+                    
                     variant="outlined"
                     type="email"
-                    margin="normal"
+                    margin="none"
                     required
                     fullWidth
                     id="email"
@@ -109,10 +122,11 @@ function SignUpForm(props) {
                   />
                 </Grid>
 
-                <Grid item xs={12}>
+                <Grid item xs={6}>
                   <TextField
+                  color="secondary"
                     variant="outlined"
-                    margin="normal"
+                    margin="none"
                     required
                     fullWidth
                     name="password"
@@ -129,10 +143,11 @@ function SignUpForm(props) {
                   />
                 </Grid>
 
-                <Grid item xs={12}>
+                <Grid item xs={6}>
                   <TextField
+                  color="secondary"
                     variant="outlined"
-                    margin="normal"
+                    margin="none"
                     required
                     fullWidth
                     name="password2"
@@ -149,19 +164,11 @@ function SignUpForm(props) {
                   />
                 </Grid>
                 <Grid item xs={12}>
-                  <FormControlLabel
-                    control={
-                      <Checkbox value="allowExtraEmails" color="primary" />
-                    }
-                    label="Eu quero receber notificações em meu e-mail."
-                  />
-                </Grid>
-                <Grid item xs={12}>
                   <Button
                     type="submit"
                     fullWidth
                     variant="contained"
-                    color="primary"
+                    color="secondary"
                     className={classes.button}>
                     Cadastrar
                   </Button>

@@ -10,6 +10,7 @@ import { makeStyles } from '@material-ui/core/styles'
 import { Link } from 'react-router-dom';
 import ProfilePicture from './profilePicture';
 import FollowButton from './followButton';
+import ShowName from './showName'
 
 const useStyles = makeStyles(theme => ({
   name: {
@@ -38,14 +39,15 @@ export default function UserCard(props) {
         <MaterialLink
           underline="none"
           component={AdapterLink}
-          to={`/usuario/${props.user._id}`}>
+          to={`/${props.user._id}`}>
           <Box display="flex" flexDirection="column" alignItems="center" mb={1}>
             <ProfilePicture
               avatar={props.user.avatar}
               width="70%"
               height="auto"
             />
-            <Typography variant="subtitle1" className={classes.name}>{props.user.name}</Typography>
+            <Typography variant="h6" className={classes.name}><ShowName user={props.user} fontSize={16} /></Typography>
+            <Typography variant="body2" gutterBottom style={{color: "#bbb"}}>@{props.user.username}</Typography>
 
             {props.user.distance && (
               <Box
